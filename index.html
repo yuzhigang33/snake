@@ -22,6 +22,7 @@
 	var gameTimer = null;
 	var canvas = null;
 	var ctx = null;
+	var score = 0; // 游戏得分
 	
 	// 食物emoji列表
 	var foodEmojis = ['🍎','🍌','🍇','🍓','🍑','🍍','🥝','🍒','🍉','🍊','🍋','🥭','🍐','🍏','🫐','🍈','🍅','🥑','🥕','🌽','🥨','🥐','🥯','🍞','🥖','🧀','🥚','🥓','🍗','🍖','🌭','🍔','🍟','🍕','🥪','🌮','🌯','🫔','🥙','🧆','🥘','🍝','🍜','🍲','🍛','🍣','🍱','🥟','🍤','🍙','🍚','🍘','🍥','🥠','🥮','🍢','🍡','🍧','🍨','🍦','🥧','🧁','🍰','🎂','🍮','🍭','🍬','🍫','🍿','🍩','🍪','🌰','🥜'];
@@ -54,6 +55,7 @@
 		];
 		direction = 'right';
 		nextDirection = 'right';
+		score = 0; // 重置得分
 	}
 	
 	function generateFood() {
@@ -127,6 +129,9 @@
 		isGameRunning = false;
 		isPaused = false;
 		
+		// 隐藏游戏结束弹窗
+		document.getElementById('gameOverModal').style.display = 'none';
+		
 		// 重置按钮状态
 		document.getElementById('startBtn').disabled = false;
 		document.getElementById('startBtn').style.opacity = '1';
@@ -137,6 +142,7 @@
 		// 重置游戏状态
 		resetSnake();
 		generateFood();
+		updateScoreDisplay();
 		draw();
 	}
 	
@@ -176,6 +182,15 @@
 		if (newHead.y < 0) newHead.y = ROWS - 1;
 		else if (newHead.y >= ROWS) newHead.y = 0;
 		
+		// 检查是否撞到自己（蛇头与蛇身重叠）
+		for (var i = 0; i < snake.length; i++) {
+			if (newHead.x === snake[i].x && newHead.y === snake[i].y) {
+				// 游戏结束
+				gameOver();
+				return;
+			}
+		}
+		
 		// 检查是否吃到食物
 		var ateFood = (newHead.x === food.x && newHead.y === food.y);
 		
@@ -186,18 +201,46 @@
 		if (!ateFood) {
 			snake.pop();
 		} else {
-			// 吃到食物，生成新食物
+			// 吃到食物，得分+10，更新显示，生成新食物
+			score += 10;
+			updateScoreDisplay();
 			generateFood();
 		}
 	}
 	
+	function gameOver() {
+		// 停止游戏
+		if (gameTimer) {
+			clearInterval(gameTimer);
+			gameTimer = null;
+		}
+		
+		isGameRunning = false;
+		isPaused = false;
+		
+		// 显示游戏结束弹窗
+		document.getElementById('finalScore').textContent = '得分: ' + score;
+		document.getElementById('gameOverModal').style.display = 'flex';
+		
+		// 重置按钮状态 - 开始游戏置灰，只能点重新开始
+		document.getElementById('startBtn').disabled = true;
+		document.getElementById('startBtn').style.opacity = '0.3';
+		document.getElementById('pauseBtn').value = '暂停';
+		document.getElementById('pauseBtn').disabled = true;
+		document.getElementById('pauseBtn').style.opacity = '0.5';
+	}
+	
+	function updateScoreDisplay() {
+		document.getElementById('scoreBoard').textContent = '得分: ' + score;
+	}
+	
 	function draw() {
 		// 清空画布
-		ctx.fillStyle = '#0f3460';
+		ctx.fillStyle = '#0a0a0a';
 		ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 		
-		// 绘制网格（可选，增加视觉效果）
-		ctx.strokeStyle = '#1a4a70';
+		// 绘制网格
+		ctx.strokeStyle = '#1a1a2e';
 		ctx.lineWidth = 1;
 		for (var i = 0; i <= COLS; i++) {
 			ctx.beginPath();
@@ -227,26 +270,35 @@
 	function drawSnakeBody(x, y) {
 		var cx = x * GRID_SIZE + GRID_SIZE / 2;
 		var cy = y * GRID_SIZE + GRID_SIZE / 2;
-		var radius = GRID_SIZE / 2 - 2;
+		var radius = GRID_SIZE / 2 - 3;
 		
-		// 创建径向渐变
+		// 创建径向渐变 - 霓虹绿色
 		var gradient = ctx.createRadialGradient(
-			cx - radius * 0.3, cy - radius * 0.3, radius * 0.2,
+			cx - radius * 0.3, cy - radius * 0.3, radius * 0.1,
 			cx, cy, radius
 		);
-		gradient.addColorStop(0, '#4ecca3');
-		gradient.addColorStop(1, '#2d8a6b');
+		gradient.addColorStop(0, '#00ff88');
+		gradient.addColorStop(0.7, '#00cc6a');
+		gradient.addColorStop(1, '#00994f');
 		
 		ctx.fillStyle = gradient;
 		ctx.beginPath();
 		ctx.arc(cx, cy, radius, 0, Math.PI * 2);
 		ctx.fill();
+		
+		// 添加发光效果
+		ctx.shadowColor = '#00ff88';
+		ctx.shadowBlur = 8;
+		ctx.strokeStyle = '#00ff88';
+		ctx.lineWidth = 1;
+		ctx.stroke();
+		ctx.shadowBlur = 0;
 	}
 	
 	function drawSnakeHead(x, y, dir) {
 		var cx = x * GRID_SIZE + GRID_SIZE / 2;
 		var cy = y * GRID_SIZE + GRID_SIZE / 2;
-		var radius = GRID_SIZE / 2 - 2;
+		var radius = GRID_SIZE / 2 - 3;
 		
 		ctx.save();
 		ctx.translate(cx, cy);
@@ -267,39 +319,56 @@
 				break;
 		}
 		
-		// 绘制蛇头主体（椭圆）
-		var gradient = ctx.createLinearGradient(-radius, -radius, radius, radius);
-		gradient.addColorStop(0, '#4ecca3');
-		gradient.addColorStop(1, '#2d8a6b');
+		// 发光效果
+		ctx.shadowColor = '#00ff88';
+		ctx.shadowBlur = 12;
+		
+		// 绘制蛇头主体 - 霓虹绿色
+		var gradient = ctx.createRadialGradient(
+			-radius * 0.3, -radius * 0.3, radius * 0.1,
+			0, 0, radius
+		);
+		gradient.addColorStop(0, '#00ff88');
+		gradient.addColorStop(0.6, '#00cc6a');
+		gradient.addColorStop(1, '#00994f');
 		
 		ctx.fillStyle = gradient;
 		ctx.beginPath();
-		ctx.ellipse(0, 0, radius, radius, 0, 0, Math.PI * 2);
+		ctx.arc(0, 0, radius, 0, Math.PI * 2);
 		ctx.fill();
 		
-		// 绘制眼睛
-		ctx.fillStyle = 'white';
+		// 关闭发光
+		ctx.shadowBlur = 0;
+		
+		// 绘制眼睛 - 发光白色
+		ctx.fillStyle = '#ffffff';
+		ctx.shadowColor = '#ffffff';
+		ctx.shadowBlur = 4;
 		ctx.beginPath();
-		ctx.arc(radius * 0.4, -radius * 0.3, radius * 0.25, 0, Math.PI * 2);
+		ctx.arc(radius * 0.35, -radius * 0.3, radius * 0.22, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.beginPath();
-		ctx.arc(radius * 0.4, radius * 0.3, radius * 0.25, 0, Math.PI * 2);
+		ctx.arc(radius * 0.35, radius * 0.3, radius * 0.22, 0, Math.PI * 2);
 		ctx.fill();
+		ctx.shadowBlur = 0;
 		
 		// 绘制瞳孔
-		ctx.fillStyle = 'black';
+		ctx.fillStyle = '#0a0a0a';
 		ctx.beginPath();
-		ctx.arc(radius * 0.45, -radius * 0.3, radius * 0.15, 0, Math.PI * 2);
+		ctx.arc(radius * 0.4, -radius * 0.3, radius * 0.12, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.beginPath();
-		ctx.arc(radius * 0.45, radius * 0.3, radius * 0.15, 0, Math.PI * 2);
+		ctx.arc(radius * 0.4, radius * 0.3, radius * 0.12, 0, Math.PI * 2);
 		ctx.fill();
 		
-		// 绘制舌头
-		ctx.fillStyle = '#ff6b6b';
+		// 绘制舌头 - 霓虹粉色
+		ctx.fillStyle = '#ff00aa';
+		ctx.shadowColor = '#ff00aa';
+		ctx.shadowBlur = 6;
 		ctx.beginPath();
-		ctx.ellipse(radius * 0.9, 0, radius * 0.3, radius * 0.4, 0, 0, Math.PI * 2);
+		ctx.ellipse(radius * 0.85, 0, radius * 0.25, radius * 0.35, 0, 0, Math.PI * 2);
 		ctx.fill();
+		ctx.shadowBlur = 0;
 		
 		ctx.restore();
 	}
@@ -321,8 +390,9 @@
 body {
 	margin: 0;
 	padding: 0;
-	background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-	font-family: Arial, sans-serif;
+	background: linear-gradient(135deg, #0d0d0d 0%, #1a1a2e 50%, #16213e 100%);
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	min-height: 100vh;
 }
 
 #gameContainer {
@@ -334,44 +404,135 @@ body {
 }
 
 #gameCanvas {
-	background: #0f3460;
-	border: 3px solid #e94560;
-	border-radius: 10px;
-	box-shadow: 0 0 30px rgba(233, 69, 96, 0.3);
+	background: #0a0a0a;
+	border: 2px solid #00ff88;
+	border-radius: 12px;
+	box-shadow: 
+		0 0 20px rgba(0, 255, 136, 0.3),
+		0 0 40px rgba(0, 255, 136, 0.1),
+		inset 0 0 30px rgba(0, 255, 136, 0.05);
 	display: block;
 }
 
 .controls {
-	margin-top: 20px;
+	margin-top: 25px;
 }
 
 .controls input {
-	background: #e94560;
-	color: white;
-	border: none;
-	padding: 10px 25px;
-	margin: 0 5px;
-	border-radius: 25px;
+	background: transparent;
+	color: #00ff88;
+	border: 2px solid #00ff88;
+	padding: 12px 30px;
+	margin: 0 8px;
+	border-radius: 30px;
 	cursor: pointer;
 	font-size: 14px;
-	transition: all 0.3s;
+	font-weight: 600;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	transition: all 0.3s ease;
+	box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
 }
 
 .controls input:hover:not(:disabled) {
-	background: #ff6b6b;
-	transform: scale(1.05);
+	background: #00ff88;
+	color: #0a0a0a;
+	box-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+	transform: translateY(-2px);
 }
 
 .controls input:disabled {
 	cursor: not-allowed;
-	opacity: 0.5;
+	border-color: #444;
+	color: #666;
+	box-shadow: none;
+}
+
+/* 得分显示 */
+#scoreBoard {
+	position: absolute;
+	top: -50px;
+	left: 0;
+	color: #00ff88;
+	font-size: 24px;
+	font-weight: bold;
+	text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+	font-family: 'Segoe UI', sans-serif;
+}
+
+/* 游戏结束弹窗 */
+#gameOverModal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.8);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 100;
+}
+
+.modal-content {
+	background: linear-gradient(135deg, #1a1a2e 0%, #0a0a0a 100%);
+	border: 2px solid #ff0044;
+	border-radius: 15px;
+	padding: 40px 60px;
+	text-align: center;
+	box-shadow: 0 0 30px rgba(255, 0, 68, 0.4);
+}
+
+.modal-content h2 {
+	color: #ff0044;
+	font-size: 36px;
+	margin: 0 0 20px 0;
+	text-shadow: 0 0 15px rgba(255, 0, 68, 0.6);
+}
+
+.modal-content p {
+	color: #ffffff;
+	font-size: 24px;
+	margin: 0 0 30px 0;
+}
+
+.modal-content input {
+	background: transparent;
+	color: #ff0044;
+	border: 2px solid #ff0044;
+	padding: 12px 40px;
+	border-radius: 30px;
+	cursor: pointer;
+	font-size: 16px;
+	font-weight: 600;
+	transition: all 0.3s ease;
+	box-shadow: 0 0 10px rgba(255, 0, 68, 0.3);
+}
+
+.modal-content input:hover {
+	background: #ff0044;
+	color: #0a0a0a;
+	box-shadow: 0 0 20px rgba(255, 0, 68, 0.6);
 }
 </style>
 </head>
 
 <body>
 <div id="gameContainer">
+	<!-- 得分显示区域 -->
+	<div id="scoreBoard">得分: 0</div>
+	
 	<canvas id="gameCanvas" width="784" height="560" tabindex="0"></canvas>
+	
+	<!-- 游戏结束弹窗 -->
+	<div id="gameOverModal" style="display: none;">
+		<div class="modal-content">
+			<h2>游戏结束</h2>
+			<p id="finalScore">得分: 0</p>
+			<input type="button" onclick="restartGame()" value="重新开始"/>
+		</div>
+	</div>
+	
 	<div class="controls">
 		<input type="button" id="startBtn" onclick="startGame()" value="开始游戏"/>
 		<input type="button" id="pauseBtn" onclick="togglePause()" value="暂停" disabled/>
