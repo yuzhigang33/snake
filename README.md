@@ -1,39 +1,57 @@
-<a href="http://yanhaijing.github.com/snake">
-  <img src="./工程1.ico" width="100px">
-</a>
+# 贪吃蛇游戏 (Snake Game)
 
-# [Snake](http://yanhaijing.github.com/snake) [![license](http://img.shields.io/npm/l/express.svg)](https://github.com/yanhaijing/snake/blob/master/MIT-LICENSE.txt)
+一个使用 HTML5 Canvas 构建的现代化贪吃蛇游戏，具有赛博朋克风格的视觉效果。
 
-Snake is a simple game on web that is like the game Snake
+## 游戏特性
 
-## Platform
+- **Canvas 渲染**：使用 HTML5 Canvas 实现流畅的游戏画面
+- **赛博朋克风格**：霓虹绿色主题，发光效果，深色背景
+- **穿墙机制**：蛇可以穿过边界从另一侧出现
+- **碰撞检测**：蛇头碰到蛇身时游戏结束
+- **得分系统**：每吃到一个食物得 10 分
+- **游戏控制**：支持开始、暂停、重新开始功能
 
-* firefox
-* chrome
-* opera
-* safira
-* ie6+ 
+## 游戏操作
 
-## Demo
+| 按键 | 功能 |
+|------|------|
+| ↑ (方向键上) | 向上移动 |
+| ↓ (方向键下) | 向下移动 |
+| ← (方向键左) | 向左移动 |
+| → (方向键右) | 向右移动 |
 
-[http://yanhaijing.github.com/snake](http://yanhaijing.github.com/snake)
+## 按钮说明
 
-## Issues
+- **开始游戏**：启动游戏（游戏进行中不可点击）
+- **暂停/继续**：切换游戏暂停状态
+- **重新开始**：重置游戏到初始状态
 
-[Report a Problem](https://github.com/yanhaijing/snake/issues)
+## 技术栈
 
-## Authors
+- HTML5 Canvas
+- 原生 JavaScript (ES5)
+- CSS3
 
-**yanhaijing**
+## 浏览器支持
 
-- [Twitter](http://t.qq.com/yanhaijing1234 "yanhaijing's Twitter")
-- [Email](http://yanhaijing1234@gmail.com "yanhaijing's Email")
+- Chrome
+- Firefox
+- Safari
+- Edge
 
-## Copyright and license
+## 文件结构
 
-Copyright © 2013 yanhaijing. All Rights Reserved
+```
+snake/
+├── index.html      # 主游戏文件
+├── README.md       # 项目说明
+└── MIT-LICENSE.txt # 许可证
+```
 
-Licensed under the MIT-LICENSE;
-you may not use this work except in compliance with the License.
-You may obtain a copy of the License in the LICENSE file, or at:
-	[http://opensource.org/licenses/MIT](http://opensource.org/licenses/MIT)
+## 本地运行
+
+直接在浏览器中打开 `index.html` 文件即可开始游戏。
+
+## 许可证
+
+MIT License
